@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resolution Arbitrator — Verify AI Support Agent Resolutions | JockeyVC</title>
+    <meta name="description"
+        content="Stop AI support agents from gaming resolution metrics. The Arbitrator verifies every 'resolved' ticket with 5-signal analysis before closing.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --border: #1e1e2e;
+            --text: #e4e4e7;
+            --text-muted: #71717a;
+            --blue: #3b82f6;
+            --blue-glow: rgba(59, 130, 246, 0.15);
+            --green: #22c55e;
+            --red: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 30%, var(--blue-glow) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            padding: .4rem 1rem;
+            font-size: .85rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        h1 {
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 800;
+            line-height: 1.1;
+            max-width: 800px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        h1 .highlight {
+            background: linear-gradient(135deg, var(--blue), #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        /* Verdict Demo */
+        .verdict-demo {
+            max-width: 700px;
+            margin: 0 auto 4rem;
+            padding: 0 2rem;
+        }
+
+        .verdict-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .verdict-header {
+            padding: 1rem 1.5rem;
+            background: rgba(255, 255, 255, .03);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .verdict-header h3 {
+            font-size: .9rem;
+            color: var(--text-muted);
+        }
+
+        .verdict-body {
+            padding: 1.5rem;
+        }
+
+        .signal {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: .75rem 0;
+            border-bottom: 1px solid var(--border);
+            font-size: .9rem;
+        }
+
+        .signal:last-child {
+            border: none;
+        }
+
+        .signal .pass {
+            color: var(--green);
+        }
+
+        .signal .fail {
+            color: var(--red);
+        }
+
+        .verdict-result {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .verdict-result.overruled {
+            background: rgba(239, 68, 68, .1);
+            border: 1px solid rgba(239, 68, 68, .3);
+            color: var(--red);
+        }
+
+        .verdict-result.confirmed {
+            background: rgba(34, 197, 94, .1);
+            border: 1px solid rgba(34, 197, 94, .3);
+            color: var(--green);
+        }
+
+        /* Integrations */
+        .integrations {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .integrations h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .integrations p {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        .int-logos {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .int-logo {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem 2.5rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: border-color .3s;
+        }
+
+        .int-logo:hover {
+            border-color: var(--blue);
+        }
+
+        .cta {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .cta-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--blue), #8b5cf6);
+            color: white;
+            text-decoration: none;
+            padding: 1rem 2.5rem;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            transition: transform .2s;
+        }
+
+        .cta-btn:hover {
+            transform: scale(1.05);
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: .85rem;
+            border-top: 1px solid var(--border);
+        }
+
+        footer a {
+            color: var(--blue);
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <section class="hero">
+        <div class="badge">⚖️ Quality Assurance for AI Support</div>
+        <h1>Did your AI agent <span class="highlight">actually help</span> the customer?</h1>
+        <p class="subtitle">AI support agents close tickets to game metrics. The Resolution Arbitrator catches fake
+            resolutions with 5-signal verdict analysis.</p>
+    </section>
+
+    <section class="verdict-demo">
+        <div class="verdict-card">
+            <div class="verdict-header">
+                <h3>Ticket #4891 — Verdict Analysis</h3><span style="color:var(--red)">🚫 OVERRULED</span>
+            </div>
+            <div class="verdict-body">
+                <div class="signal"><span>Question-Answer Alignment</span><span class="fail">✗ Failed</span></div>
+                <div class="signal"><span>Deflection Detection</span><span class="fail">✗ "Check our docs"
+                        detected</span></div>
+                <div class="signal"><span>Action Steps Provided</span><span class="fail">✗ No concrete actions</span>
+                </div>
+                <div class="signal"><span>Follow-Up Encouraged</span><span class="pass">✓ Passed</span></div>
+                <div class="signal"><span>Response Substantive</span><span class="fail">✗ Too brief</span></div>
+                <div class="verdict-result overruled">VERDICT: OVERRULED (Confidence: 25/100)<br><small>Recommendation:
+                        Re-open and escalate to human agent</small></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="integrations">
+        <h2>Plug into your existing stack</h2>
+        <p>One webhook. Works with every major support platform.</p>
+        <div class="int-logos">
+            <div class="int-logo">Zendesk</div>
+            <div class="int-logo">Intercom</div>
+            <div class="int-logo">Freshdesk</div>
+            <div class="int-logo">Custom API</div>
+        </div>
+    </section>
+
+    <section class="cta">
+        <a href="https://github.com/shinertx/resolution-arbitrator" class="cta-btn">Get Started on GitHub →</a>
+    </section>
+
+    <footer>
+        <p>Built by <a href="https://jockeyvc.com">JockeyVC</a> · Part of the Agentic Infrastructure Suite</p>
+    </footer>
+</body>
+
+</html>

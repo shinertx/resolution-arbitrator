@@ -1,0 +1,30 @@
+{
+    "name": "@jockeyvc/resolution-arbitrator",
+    "version": "1.0.0",
+    "description": "Proxy that verifies AI customer service agents actually resolved tickets before marking them 'closed' — prevents agents from gaming resolution metrics",
+    "main": "src/index.js",
+    "scripts": {
+        "start": "node src/index.js",
+        "dev": "node --watch src/index.js",
+        "test": "node tests/arbitrator.test.js"
+    },
+    "keywords": [
+        "ai",
+        "agent",
+        "customer-service",
+        "support",
+        "resolution",
+        "verification",
+        "quality"
+    ],
+    "author": "JockeyVC",
+    "license": "MIT",
+    "dependencies": {
+        "express": "^5.1.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/shinertx/resolution-arbitrator"
+    },
+    "homepage": "https://resolve.jockeyvc.com"
+}
