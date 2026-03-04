@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — Resolution Arbitrator</title>
+    <meta name="description" content="Live dashboard showing arbitrated ticket stats, overrule rates, and dispute details.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --surface-alt: #161622;
+            --border: #1e1e2e;
+            --text: #e4e4e7;
+            --text-muted: #71717a;
+            --blue: #3b82f6;
+            --blue-glow: rgba(59, 130, 246, 0.15);
+            --purple: #8b5cf6;
+            --green: #22c55e;
+            --green-glow: rgba(34, 197, 94, 0.12);
+            --red: #ef4444;
+            --red-glow: rgba(239, 68, 68, 0.12);
+            --amber: #f59e0b;
+            --amber-glow: rgba(245, 158, 11, 0.12);
+            --radius: 16px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* ── Nav ─────────────────────────────────────── */
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border);
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            font-weight: 700;
+            font-size: 1.05rem;
+            text-decoration: none;
+            color: var(--text);
+        }
+
+        .nav-brand span { font-size: 1.3rem; }
+
+        .nav-links { display: flex; gap: .5rem; }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            padding: .5rem 1rem;
+            border-radius: 8px;
+            font-size: .9rem;
+            font-weight: 500;
+            transition: all .2s;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--text);
+            background: var(--surface);
+        }
+
+        .nav-links a.active { border: 1px solid var(--border); }
+
+        /* ── Page ─────────────────────────────────────── */
+        .page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: .25rem;
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            font-size: .95rem;
+        }
+
+        .live-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--green);
+            border-radius: 50%;
+            margin-right: .5rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5); }
+            50% { opacity: .7; box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+        }
+
+        /* ── Stats Grid ──────────────────────────────── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: border-color .3s, transform .2s;
+        }
+
+        .stat-card:hover {
+            border-color: var(--blue);
+            transform: translateY(-2px);
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+        }
+
+        .stat-card.blue::after { background: linear-gradient(90deg, var(--blue), var(--purple)); }
+        .stat-card.green::after { background: var(--green); }
+        .stat-card.red::after { background: var(--red); }
+        .stat-card.amber::after { background: var(--amber); }
+
+        .stat-label {
+            font-size: .8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            margin-bottom: .5rem;
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.2rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .stat-value.blue { color: var(--blue); }
+        .stat-value.green { color: var(--green); }
+        .stat-value.red { color: var(--red); }
+        .stat-value.amber { color: var(--amber); }
+
+        .stat-sub {
+            font-size: .8rem;
+            color: var(--text-muted);
+            margin-top: .5rem;
+        }
+
+        /* ── Gauge ───────────────────────────────────── */
+        .gauge-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .gauge-section { grid-template-columns: 1fr; }
+        }
+
+        .gauge-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gauge-card h3 {
+            font-size: .85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            margin-bottom: 1.5rem;
+        }
+
+        .gauge-svg {
+            width: 200px;
+            height: 120px;
+        }
+
+        .gauge-track {
+            fill: none;
+            stroke: var(--border);
+            stroke-width: 12;
+            stroke-linecap: round;
+        }
+
+        .gauge-fill {
+            fill: none;
+            stroke-width: 12;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s ease, stroke .5s;
+        }
+
+        .gauge-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2rem;
+            font-weight: 700;
+            fill: var(--text);
+            text-anchor: middle;
+        }
+
+        .gauge-label {
+            font-size: .75rem;
+            fill: var(--text-muted);
+            text-anchor: middle;
+        }
+
+        /* Signal Breakdown */
+        .signal-breakdown {
+            width: 100%;
+            margin-top: 1.5rem;
+        }
+
+        .signal-bar-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: .75rem;
+            font-size: .85rem;
+        }
+
+        .signal-bar-label { color: var(--text-muted); flex: 1; }
+
+        .signal-bar-track {
+            flex: 1.5;
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            margin: 0 .75rem;
+            overflow: hidden;
+        }
+
+        .signal-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width .8s ease;
+        }
+
+        .signal-bar-val {
+            font-family: 'JetBrains Mono', monospace;
+            width: 3rem;
+            text-align: right;
+            font-size: .8rem;
+        }
+
+        /* ── Disputes Table ───────────────────────────── */
+        .disputes-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .disputes-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .disputes-header h2 {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .disputes-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .8rem;
+            color: var(--red);
+            background: var(--red-glow);
+            padding: .25rem .75rem;
+            border-radius: 100px;
+        }
+
+        .disputes-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .disputes-table th {
+            text-align: left;
+            padding: .75rem 1.5rem;
+            font-size: .75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            background: rgba(255, 255, 255, .02);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .disputes-table td {
+            padding: .75rem 1.5rem;
+            font-size: .85rem;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+
+        .disputes-table tr:last-child td { border-bottom: none; }
+
+        .disputes-table tr {
+            transition: background .2s;
+        }
+
+        .disputes-table tr:hover {
+            background: rgba(255, 255, 255, .02);
+        }
+
+        .ticket-id {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--blue);
+            font-weight: 500;
+        }
+
+        .confidence-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            padding: .2rem .6rem;
+            border-radius: 6px;
+            font-size: .8rem;
+        }
+
+        .confidence-badge.low {
+            color: var(--red);
+            background: var(--red-glow);
+        }
+
+        .confidence-badge.mid {
+            color: var(--amber);
+            background: var(--amber-glow);
+        }
+
+        .reason-text {
+            color: var(--text-muted);
+            max-width: 400px;
+            line-height: 1.4;
+        }
+
+        .time-text {
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .8rem;
+            white-space: nowrap;
+        }
+
+        .signals-pills {
+            display: flex;
+            gap: .35rem;
+            flex-wrap: wrap;
+        }
+
+        .signal-pill {
+            font-size: .7rem;
+            padding: .15rem .5rem;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .signal-pill.fail {
+            color: var(--red);
+            background: var(--red-glow);
+        }
+
+        .signal-pill.pass {
+            color: var(--green);
+            background: var(--green-glow);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p { font-size: .95rem; }
+
+        /* ── Footer ──────────────────────────────────── */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: .8rem;
+            border-top: 1px solid var(--border);
+            margin-top: 3rem;
+        }
+
+        footer a { color: var(--blue); text-decoration: none; }
+
+        /* ── Responsive ──────────────────────────────── */
+        @media (max-width: 640px) {
+            .page { padding: 1rem; }
+            .disputes-table th:nth-child(4),
+            .disputes-table td:nth-child(4) { display: none; }
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <a href="/" class="nav-brand"><span>⚖️</span> Resolution Arbitrator</a>
+        <div class="nav-links">
+            <a href="/dashboard" class="active">Dashboard</a>
+            <a href="/test">Test</a>
+            <a href="/" >Home</a>
+        </div>
+    </nav>
+
+    <div class="page">
+        <div class="page-header">
+            <h1><span class="live-dot"></span>Arbitration Dashboard</h1>
+            <p>Real-time overview of AI support agent resolution verdicts</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card blue">
+                <div class="stat-label">Total Arbitrated</div>
+                <div class="stat-value blue" id="stat-total">—</div>
+                <div class="stat-sub">tickets processed</div>
+            </div>
+            <div class="stat-card green">
+                <div class="stat-label">Confirmed</div>
+                <div class="stat-value green" id="stat-confirmed">—</div>
+                <div class="stat-sub">legitimate resolutions</div>
+            </div>
+            <div class="stat-card red">
+                <div class="stat-label">Overruled</div>
+                <div class="stat-value red" id="stat-overruled">—</div>
+                <div class="stat-sub">fake resolutions caught</div>
+            </div>
+            <div class="stat-card amber">
+                <div class="stat-label">Overrule Rate</div>
+                <div class="stat-value amber" id="stat-rate">—</div>
+                <div class="stat-sub">of resolutions rejected</div>
+            </div>
+        </div>
+
+        <!-- Gauge + Breakdown -->
+        <div class="gauge-section">
+            <div class="gauge-card">
+                <h3>Overrule Rate</h3>
+                <svg class="gauge-svg" viewBox="0 0 200 120">
+                    <path class="gauge-track" d="M 20 100 A 80 80 0 0 1 180 100" />
+                    <path class="gauge-fill" id="gauge-arc" d="M 20 100 A 80 80 0 0 1 180 100"
+                        stroke="var(--green)" stroke-dasharray="251.2" stroke-dashoffset="251.2" />
+                    <text class="gauge-text" x="100" y="90" id="gauge-value">0%</text>
+                    <text class="gauge-label" x="100" y="110">of tickets overruled</text>
+                </svg>
+            </div>
+            <div class="gauge-card">
+                <h3>Signal Failure Distribution</h3>
+                <div class="signal-breakdown" id="signal-breakdown">
+                    <div class="signal-bar-row">
+                        <span class="signal-bar-label">Question Mismatch</span>
+                        <div class="signal-bar-track"><div class="signal-bar-fill" style="width:0%;background:var(--red)"></div></div>
+                        <span class="signal-bar-val">0</span>
+                    </div>
+                    <div class="signal-bar-row">
+                        <span class="signal-bar-label">Deflection</span>
+                        <div class="signal-bar-track"><div class="signal-bar-fill" style="width:0%;background:var(--amber)"></div></div>
+                        <span class="signal-bar-val">0</span>
+                    </div>
+                    <div class="signal-bar-row">
+                        <span class="signal-bar-label">No Actions</span>
+                        <div class="signal-bar-track"><div class="signal-bar-fill" style="width:0%;background:var(--purple)"></div></div>
+                        <span class="signal-bar-val">0</span>
+                    </div>
+                    <div class="signal-bar-row">
+                        <span class="signal-bar-label">Follow-Up Avoided</span>
+                        <div class="signal-bar-track"><div class="signal-bar-fill" style="width:0%;background:var(--blue)"></div></div>
+                        <span class="signal-bar-val">0</span>
+                    </div>
+                    <div class="signal-bar-row">
+                        <span class="signal-bar-label">Too Brief</span>
+                        <div class="signal-bar-track"><div class="signal-bar-fill" style="width:0%;background:var(--red)"></div></div>
+                        <span class="signal-bar-val">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Disputes Table -->
+        <div class="disputes-card">
+            <div class="disputes-header">
+                <h2>🚫 Recent Disputes</h2>
+                <span class="disputes-count" id="disputes-count">0 disputes</span>
+            </div>
+            <div id="disputes-body">
+                <div class="empty-state">
+                    <div class="icon">✅</div>
+                    <p>No disputes yet. Submit tickets via the <a href="/test">test page</a> or connect a webhook.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Built by <a href="https://jockeyvc.com">JockeyVC</a> · Auto-refreshes every 5s · <a href="/api/stats">Raw API</a></p>
+    </footer>
+
+    <script>
+        const ARC_LENGTH = 251.2;
+
+        async function fetchData() {
+            try {
+                const [statsRes, disputesRes] = await Promise.all([
+                    fetch('/api/stats'),
+                    fetch('/api/disputes'),
+                ]);
+                const stats = await statsRes.json();
+                const disputesData = await disputesRes.json();
+                updateStats(stats);
+                updateGauge(stats.overruleRate);
+                updateSignalBreakdown(disputesData.disputes);
+                updateDisputes(disputesData);
+            } catch (e) {
+                console.error('Fetch error:', e);
+            }
+        }
+
+        function updateStats(s) {
+            animateValue('stat-total', s.totalArbitrated);
+            animateValue('stat-confirmed', s.confirmed);
+            animateValue('stat-overruled', s.overruled);
+            document.getElementById('stat-rate').textContent = s.overruleRate + '%';
+        }
+
+        function animateValue(id, val) {
+            document.getElementById(id).textContent = val.toLocaleString();
+        }
+
+        function updateGauge(rate) {
+            const offset = ARC_LENGTH - (rate / 100) * ARC_LENGTH;
+            const arc = document.getElementById('gauge-arc');
+            arc.style.strokeDashoffset = offset;
+
+            // Color: green < 20, amber 20-50, red > 50
+            if (rate > 50) arc.style.stroke = 'var(--red)';
+            else if (rate > 20) arc.style.stroke = 'var(--amber)';
+            else arc.style.stroke = 'var(--green)';
+
+            document.getElementById('gauge-value').textContent = rate + '%';
+        }
+
+        function updateSignalBreakdown(disputes) {
+            if (!disputes || disputes.length === 0) return;
+
+            const counts = {
+                questionAnswered: 0,
+                deflectionDetected: 0,
+                actionPresent: 0,
+                followUpAvoided: 0,
+                responseSubstantive: 0,
+            };
+
+            disputes.forEach(d => {
+                if (!d.signals.questionAnswered) counts.questionAnswered++;
+                if (d.signals.deflectionDetected) counts.deflectionDetected++;
+                if (!d.signals.actionPresent) counts.actionPresent++;
+                if (d.signals.followUpAvoided) counts.followUpAvoided++;
+                if (!d.signals.responseSubstantive) counts.responseSubstantive++;
+            });
+
+            const max = Math.max(...Object.values(counts), 1);
+            const rows = document.querySelectorAll('#signal-breakdown .signal-bar-row');
+            const vals = [counts.questionAnswered, counts.deflectionDetected, counts.actionPresent, counts.followUpAvoided, counts.responseSubstantive];
+
+            rows.forEach((row, i) => {
+                const fill = row.querySelector('.signal-bar-fill');
+                const valEl = row.querySelector('.signal-bar-val');
+                fill.style.width = (vals[i] / max * 100) + '%';
+                valEl.textContent = vals[i];
+            });
+        }
+
+        function updateDisputes(data) {
+            const container = document.getElementById('disputes-body');
+            const countEl = document.getElementById('disputes-count');
+            countEl.textContent = data.total + ' dispute' + (data.total !== 1 ? 's' : '');
+
+            if (!data.disputes || data.disputes.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">✅</div>
+                        <p>No disputes yet. Submit tickets via the <a href="/test">test page</a> or connect a webhook.</p>
+                    </div>`;
+                return;
+            }
+
+            const rows = data.disputes.slice().reverse().map(d => {
+                const confClass = d.confidenceScore < 25 ? 'low' : 'mid';
+                const signalPills = Object.entries(d.signals).map(([key, val]) => {
+                    const labels = {
+                        questionAnswered: 'Q&A',
+                        deflectionDetected: 'Deflect',
+                        actionPresent: 'Actions',
+                        followUpAvoided: 'Follow-Up',
+                        responseSubstantive: 'Substance',
+                    };
+                    const pass = key === 'deflectionDetected' || key === 'followUpAvoided' ? !val : val;
+                    return `<span class="signal-pill ${pass ? 'pass' : 'fail'}">${labels[key] || key}</span>`;
+                }).join('');
+
+                const time = new Date(d.timestamp);
+                const timeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                return `<tr>
+                    <td><span class="ticket-id">#${d.ticketId}</span></td>
+                    <td><span class="confidence-badge ${confClass}">${d.confidenceScore}/100</span></td>
+                    <td><div class="signals-pills">${signalPills}</div></td>
+                    <td class="reason-text">${escapeHtml(d.reason)}</td>
+                    <td class="time-text">${timeStr}</td>
+                </tr>`;
+            }).join('');
+
+            container.innerHTML = `
+                <table class="disputes-table">
+                    <thead><tr>
+                        <th>Ticket</th>
+                        <th>Score</th>
+                        <th>Signals</th>
+                        <th>Reason</th>
+                        <th>Time</th>
+                    </tr></thead>
+                    <tbody>${rows}</tbody>
+                </table>`;
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // Initial fetch + poll
+        fetchData();
+        setInterval(fetchData, 5000);
+    </script>
+</body>
+
+</html>

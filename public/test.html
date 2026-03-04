@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Test — Resolution Arbitrator</title>
+    <meta name="description" content="Paste a customer message and agent response to see the arbitration verdict live.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --surface-alt: #16162a;
+            --border: #1e1e2e;
+            --text: #e4e4e7;
+            --text-muted: #71717a;
+            --blue: #3b82f6;
+            --blue-glow: rgba(59, 130, 246, 0.15);
+            --purple: #8b5cf6;
+            --green: #22c55e;
+            --green-glow: rgba(34, 197, 94, 0.12);
+            --red: #ef4444;
+            --red-glow: rgba(239, 68, 68, 0.12);
+            --amber: #f59e0b;
+            --radius: 16px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* ── Nav ────────────────────────────── */
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border);
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            font-weight: 700;
+            font-size: 1.05rem;
+            text-decoration: none;
+            color: var(--text);
+        }
+
+        .nav-brand span { font-size: 1.3rem; }
+
+        .nav-links { display: flex; gap: .5rem; }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            padding: .5rem 1rem;
+            border-radius: 8px;
+            font-size: .9rem;
+            font-weight: 500;
+            transition: all .2s;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--text);
+            background: var(--surface);
+        }
+
+        .nav-links a.active { border: 1px solid var(--border); }
+
+        /* ── Page ────────────────────────────── */
+        .page {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .page-header { margin-bottom: 2rem; }
+
+        .page-header h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: .25rem;
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            font-size: .95rem;
+        }
+
+        /* ── Form ────────────────────────────── */
+        .form-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 640px) {
+            .form-row { grid-template-columns: 1fr; }
+        }
+
+        .form-group { display: flex; flex-direction: column; }
+
+        .form-group.full { grid-column: 1 / -1; }
+
+        label {
+            font-size: .8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            margin-bottom: .5rem;
+        }
+
+        textarea, input[type="text"] {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: .9rem;
+            padding: .75rem 1rem;
+            resize: vertical;
+            transition: border-color .3s;
+            outline: none;
+        }
+
+        textarea:focus, input[type="text"]:focus {
+            border-color: var(--blue);
+        }
+
+        textarea {
+            min-height: 120px;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: .75rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--blue), var(--purple));
+            color: white;
+            border: none;
+            padding: .75rem 2rem;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: .95rem;
+            cursor: pointer;
+            transition: transform .2s, opacity .2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary:hover { transform: scale(1.03); }
+        .btn-primary:active { transform: scale(0.98); }
+        .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+        .btn-secondary {
+            background: var(--surface-alt);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            padding: .6rem 1.25rem;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: .85rem;
+            cursor: pointer;
+            transition: all .2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-secondary:hover {
+            color: var(--text);
+            border-color: var(--blue);
+        }
+
+        /* ── Examples ────────────────────────── */
+        .examples-label {
+            font-size: .8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            font-weight: 600;
+            margin-bottom: .75rem;
+        }
+
+        .examples {
+            display: flex;
+            gap: .5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        .example-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: .5rem 1rem;
+            border-radius: 100px;
+            font-size: .8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all .2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .example-btn:hover {
+            color: var(--text);
+            border-color: var(--blue);
+            background: var(--blue-glow);
+        }
+
+        /* ── Result ──────────────────────────── */
+        .result-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            display: none;
+            animation: slideIn .4s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-card.show { display: block; }
+
+        .result-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .result-header h2 { font-size: 1rem; font-weight: 700; }
+
+        .verdict-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: .9rem;
+            padding: .35rem 1rem;
+            border-radius: 8px;
+        }
+
+        .verdict-badge.overruled {
+            color: var(--red);
+            background: var(--red-glow);
+        }
+
+        .verdict-badge.confirmed {
+            color: var(--green);
+            background: var(--green-glow);
+        }
+
+        .result-body { padding: 1.5rem; }
+
+        /* Confidence Bar */
+        .confidence-section { margin-bottom: 1.5rem; }
+
+        .confidence-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: .5rem;
+        }
+
+        .confidence-label {
+            font-size: .8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+
+        .confidence-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .confidence-track {
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width .6s ease;
+        }
+
+        /* Signals */
+        .signals-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: .75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 640px) {
+            .signals-grid { grid-template-columns: 1fr; }
+        }
+
+        .signal-item {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            padding: .75rem 1rem;
+            background: var(--bg);
+            border-radius: 10px;
+            font-size: .85rem;
+        }
+
+        .signal-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .8rem;
+            flex-shrink: 0;
+        }
+
+        .signal-icon.pass {
+            background: var(--green-glow);
+            color: var(--green);
+        }
+
+        .signal-icon.fail {
+            background: var(--red-glow);
+            color: var(--red);
+        }
+
+        .signal-name { color: var(--text-muted); font-size: .82rem; }
+
+        /* Reason & Recommendation */
+        .result-meta {
+            border-top: 1px solid var(--border);
+            padding-top: 1.25rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 640px) {
+            .result-meta { grid-template-columns: 1fr; }
+        }
+
+        .meta-block h4 {
+            font-size: .75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            margin-bottom: .35rem;
+        }
+
+        .meta-block p { font-size: .9rem; line-height: 1.5; }
+
+        /* ── Footer ──────────────────────────── */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: .8rem;
+            border-top: 1px solid var(--border);
+            margin-top: 3rem;
+        }
+
+        footer a { color: var(--blue); text-decoration: none; }
+
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin .6s linear infinite;
+            margin-right: .5rem;
+            vertical-align: middle;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <a href="/" class="nav-brand"><span>⚖️</span> Resolution Arbitrator</a>
+        <div class="nav-links">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/test" class="active">Test</a>
+            <a href="/">Home</a>
+        </div>
+    </nav>
+
+    <div class="page">
+        <div class="page-header">
+            <h1>🧪 Live Verdict Test</h1>
+            <p>Paste a customer message and agent response to see the arbitration verdict instantly</p>
+        </div>
+
+        <!-- Quick Examples -->
+        <div class="examples-label">Quick Examples</div>
+        <div class="examples">
+            <button class="example-btn" data-example="deflection" id="example-deflection">🚫 Deflection</button>
+            <button class="example-btn" data-example="good" id="example-good">✅ Good Resolution</button>
+            <button class="example-btn" data-example="brief" id="example-brief">📄 Too Brief</button>
+            <button class="example-btn" data-example="no-action" id="example-no-action">❌ No Action Steps</button>
+        </div>
+
+        <!-- Input Form -->
+        <div class="form-card">
+            <div class="form-row">
+                <div class="form-group full">
+                    <label for="ticket-id">Ticket ID (optional)</label>
+                    <input type="text" id="ticket-id" placeholder="e.g. TICKET-4891">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="customer-message">Customer Message</label>
+                    <textarea id="customer-message" placeholder="What the customer said..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="agent-response">Agent Response</label>
+                    <textarea id="agent-response" placeholder="How the AI agent responded..."></textarea>
+                </div>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn-primary" id="run-btn">⚖️ Run Verdict</button>
+                <button class="btn-secondary" id="clear-btn">Clear</button>
+            </div>
+        </div>
+
+        <!-- Result -->
+        <div class="result-card" id="result-card">
+            <div class="result-header">
+                <h2>Verdict Analysis</h2>
+                <span class="verdict-badge" id="verdict-badge"></span>
+            </div>
+            <div class="result-body">
+                <div class="confidence-section">
+                    <div class="confidence-header">
+                        <span class="confidence-label">Confidence Score</span>
+                        <span class="confidence-val" id="confidence-val"></span>
+                    </div>
+                    <div class="confidence-track">
+                        <div class="confidence-fill" id="confidence-fill"></div>
+                    </div>
+                </div>
+
+                <div class="signals-grid" id="signals-grid"></div>
+
+                <div class="result-meta">
+                    <div class="meta-block">
+                        <h4>Reason</h4>
+                        <p id="reason-text"></p>
+                    </div>
+                    <div class="meta-block">
+                        <h4>Recommendation</h4>
+                        <p id="recommendation-text"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Built by <a href="https://jockeyvc.com">JockeyVC</a> · Powered by the 5-Signal Verdict Engine · <a href="/dashboard">View Dashboard</a></p>
+    </footer>
+
+    <script>
+        const EXAMPLES = {
+            deflection: {
+                customer: "I've been charged twice for my subscription this month. I need a refund for the duplicate charge immediately.",
+                agent: "Thank you for reaching out! I understand your concern about the billing issue. Please check our documentation at help.example.com/billing for information about how charges work. If you continue to experience issues, please contact our support team again. We're closing this ticket as resolved.",
+            },
+            good: {
+                customer: "I can't log into my account. I've tried resetting my password three times and I keep getting an error saying 'account locked'.",
+                agent: "I've looked into your account and found that it was locked after multiple failed login attempts — this is a security measure. Here's what I've done:\n\n1. I've unlocked your account\n2. I've sent a fresh password reset link to your email (john@example.com)\n3. I've cleared the failed attempt counter\n\nPlease click the reset link within 24 hours to set a new password. If you don't see the email, check your spam folder. Let me know if you run into any other issues!",
+            },
+            brief: {
+                customer: "My order #48291 was supposed to arrive 5 days ago but I still haven't received it. The tracking hasn't updated in a week. I need this for an important event this weekend. Can you either expedite a replacement or give me a refund?",
+                agent: "Sorry about that. We'll look into it.",
+            },
+            'no-action': {
+                customer: "The export feature in your app crashes every time I try to export more than 100 rows to CSV. I've tried on Chrome, Firefox, and Safari. This is blocking my work.",
+                agent: "We're aware of this issue and it is a known issue that our engineering team is working on. We appreciate your patience while we work on a fix. We'll get back to you when it's resolved. This ticket will be auto-closed in 48 hours if no further response is received.",
+            },
+        };
+
+        // Load example
+        document.querySelectorAll('.example-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const key = btn.dataset.example;
+                const ex = EXAMPLES[key];
+                if (!ex) return;
+                document.getElementById('customer-message').value = ex.customer;
+                document.getElementById('agent-response').value = ex.agent;
+                document.getElementById('ticket-id').value = 'EXAMPLE-' + Math.floor(Math.random() * 9000 + 1000);
+            });
+        });
+
+        // Clear
+        document.getElementById('clear-btn').addEventListener('click', () => {
+            document.getElementById('customer-message').value = '';
+            document.getElementById('agent-response').value = '';
+            document.getElementById('ticket-id').value = '';
+            document.getElementById('result-card').classList.remove('show');
+        });
+
+        // Run verdict
+        document.getElementById('run-btn').addEventListener('click', async () => {
+            const customerMessage = document.getElementById('customer-message').value.trim();
+            const agentResponse = document.getElementById('agent-response').value.trim();
+            const ticketId = document.getElementById('ticket-id').value.trim() || 'TEST-' + Math.floor(Math.random() * 9000 + 1000);
+
+            if (!customerMessage || !agentResponse) {
+                alert('Please provide both a customer message and agent response.');
+                return;
+            }
+
+            const btn = document.getElementById('run-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Analyzing…';
+
+            try {
+                const res = await fetch('/api/arbitrate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ticketId, customerMessage, agentResponse }),
+                });
+                const verdict = await res.json();
+                renderVerdict(verdict);
+            } catch (err) {
+                alert('Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '⚖️ Run Verdict';
+            }
+        });
+
+        function renderVerdict(v) {
+            const card = document.getElementById('result-card');
+            card.classList.add('show');
+            card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            // Badge
+            const badge = document.getElementById('verdict-badge');
+            badge.textContent = v.overruled ? '🚫 OVERRULED' : '✅ CONFIRMED';
+            badge.className = 'verdict-badge ' + (v.overruled ? 'overruled' : 'confirmed');
+
+            // Confidence
+            const confVal = document.getElementById('confidence-val');
+            confVal.textContent = v.confidenceScore + '/100';
+            confVal.style.color = v.confidenceScore >= 60 ? 'var(--green)' : v.confidenceScore >= 40 ? 'var(--amber)' : 'var(--red)';
+
+            const fill = document.getElementById('confidence-fill');
+            fill.style.width = v.confidenceScore + '%';
+            fill.style.background = v.confidenceScore >= 60
+                ? 'var(--green)'
+                : v.confidenceScore >= 40
+                    ? 'var(--amber)'
+                    : 'var(--red)';
+
+            // Signals
+            const signalLabels = {
+                questionAnswered: 'Question Answered',
+                deflectionDetected: 'Deflection Detection',
+                actionPresent: 'Action Steps Present',
+                followUpAvoided: 'Follow-Up Avoidance',
+                responseSubstantive: 'Substantive Response',
+            };
+
+            const grid = document.getElementById('signals-grid');
+            grid.innerHTML = Object.entries(v.signals).map(([key, val]) => {
+                // For deflection and follow-up, true is BAD
+                const isGood = (key === 'deflectionDetected' || key === 'followUpAvoided') ? !val : val;
+                return `
+                    <div class="signal-item">
+                        <div class="signal-icon ${isGood ? 'pass' : 'fail'}">${isGood ? '✓' : '✗'}</div>
+                        <div>
+                            <div class="signal-name">${signalLabels[key] || key}</div>
+                            <div style="font-weight:600;font-size:.85rem;color:${isGood ? 'var(--green)' : 'var(--red)'}">${isGood ? 'Passed' : 'Failed'}</div>
+                        </div>
+                    </div>`;
+            }).join('');
+
+            // Reason + recommendation
+            document.getElementById('reason-text').textContent = v.reason;
+            document.getElementById('recommendation-text').textContent = v.recommendation;
+        }
+    </script>
+</body>
+
+</html>

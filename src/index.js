@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const { arbitrate, getStats, getDisputes } = require('./arbitrator');
 
 const app = express();
@@ -6,7 +7,28 @@ const PORT = process.env.PORT || 4030;
 
 app.use(express.json({ limit: '10mb' }));
 
-// ── Dashboard ───────────────────────────────────────────
+// ── Static files ────────────────────────────────────────
+app.use(express.static(path.join(__dirname, '..', 'public')));
+
+// ── Health ──────────────────────────────────────────────
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
+});
+
+// ── Page routes ─────────────────────────────────────────
+app.get('/dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html'));
+});
+
+app.get('/test', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'test.html'));
+});
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'landing', 'index.html'));
+});
+
+// ── API: Dashboard ──────────────────────────────────────
 app.get('/api/stats', (req, res) => {
     res.json(getStats());
 });
